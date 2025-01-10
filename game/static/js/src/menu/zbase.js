@@ -1,6 +1,7 @@
 class AcGameMenu {
     constructor(root){
         this.root = root;
+        // create a new DOM
         this.$menu = $(`
 <div class="ac-game-menu">
     <div class="ac-game-menu-field">
