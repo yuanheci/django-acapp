@@ -14,7 +14,7 @@ class AcGameMenu {
         </div>
         <br>
         <div class="ac-game-menu-field-item ac-game-menu-field-item-settings">
-            设置
+            退出登录
         </div>
     </div>
 </div>
@@ -26,6 +26,7 @@ class AcGameMenu {
         this.$settings = this.$menu.find('.ac-game-menu-field-item-settings');
 
         this.start();
+        this.$menu.hide(); //一开始是登录界面，所以这里要隐藏
     }
 
     start() {
@@ -35,7 +36,7 @@ class AcGameMenu {
     add_listening_events(){
         let outer = this;
         this.$single_mode.click(function(){
-//            console.log("click single mode");
+            console.log("click single mode");
             outer.hide();
             outer.root.playground.show();
         });
@@ -44,6 +45,7 @@ class AcGameMenu {
         });
         this.$settings.click(function(){
             console.log("click settings");
+            outer.root.settings.logout_on_remote();
         });
     }
 
