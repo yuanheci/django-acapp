@@ -9,6 +9,7 @@ class Player(models.Model): # Player类继承自Model类
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     # 类的实例化，赋值给photo, 也是一个字段
     photo = models.URLField(max_length=256, blank=True)
+    openid = models.CharField(default="", max_length=256, blank=True, null=True)
 
     def __str__(self):
         return str(self.user) # 展示用户的用户名
