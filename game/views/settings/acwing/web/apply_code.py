@@ -12,7 +12,7 @@ def get_state(): # 随机8位数字
 def apply_code(request):
     # 传递的四个参数
     appid = "7329"
-    redirect_uri = quote("https://app7329.acapp.acwing.com.cn/settings/acwing/web/receive_code/")
+    redirect_uri = quote("https://webapp.yuanheci.site/settings/acwing/web/receive_code/")
     scope = "userinfo"
     state = get_state()
 

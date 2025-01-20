@@ -123,7 +123,7 @@ class Settings {
 
     acwing_login() {
         $.ajax({
-            url: "https://app7329.acapp.acwing.com.cn/settings/acwing/web/apply_code/",
+            url: "https://webapp.yuanheci.site/settings/acwing/web/apply_code/",
             type: "GET",
             success: function(resp) {
                 console.log(resp);
@@ -161,7 +161,7 @@ class Settings {
         this.$register_error_message.empty();
 
         $.ajax({
-            url: "https://app7329.acapp.acwing.com.cn/settings/register/",
+            url: "https://webapp.yuanheci.site/settings/register/",
             type: "GET",
             data: {
                 username: username,
@@ -185,7 +185,7 @@ class Settings {
         let password = this.$login_password.val();
         this.$login_error_message.empty();
         $.ajax({
-            url: "https://app7329.acapp.acwing.com.cn/settings/login/",
+            url: "https://webapp.yuanheci.site/settings/login/",
             type: "GET",
             data: {
                 username: username,
@@ -205,7 +205,7 @@ class Settings {
         if (this.platform === "ACAPP") return false;
 
         $.ajax({
-            url: "https://app7329.acapp.acwing.com.cn/settings/logout/",
+            url: "https://webapp.yuanheci.site/settings/logout/",
             type: "GET",
             success: function(resp) {
                 console.log(resp);
@@ -227,7 +227,7 @@ class Settings {
     getinfo() {
         let outer = this;
         $.ajax({
-            url: "https://app7329.acapp.acwing.com.cn/settings/getinfo/",
+            url: "https://webapp.yuanheci.site/settings/getinfo/",
             type: "GET",
             data: {
                 platform: outer.platform,
