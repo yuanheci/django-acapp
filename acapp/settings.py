@@ -26,12 +26,13 @@ SECRET_KEY = 'django-insecure-2gooqa3t!5v*hrk=gt-h*nbxkps&#=%%yk*gfet6+n%d!%@#wr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["192.144.200.235", "yuanheci.site", "webapp.yuanheci.site", "app7329.acapp.acwing.com.cn"]
+ALLOWED_HOSTS = ["192.144.200.235", "webapp.yuanheci.site", "app7329.acapp.acwing.com.cn"]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'game.apps.GameConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -140,3 +141,15 @@ CACHES = {
     },  
 }
 USER_AGENTS_CACHE = 'default'
+
+ASGI_APPLICATION = 'acapp.asgi.application'
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+ROOM_CAPACITY=3

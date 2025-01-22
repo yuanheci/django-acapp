@@ -37,7 +37,14 @@ class Settings {
             <img width="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png">
             <br>
             <div>
-                AcWing一键登录
+                AcWing登录
+            </div>
+        </div>
+        <div class="ac-game-settings-qq">
+            <img width="30" src="https://webapp.yuanheci.site/static/image/settings/qq_logo.png">
+            <br>
+            <div class="ac-game-settings-qq-login-item">
+                QQ登录
             </div>
         </div>
     </div>
@@ -72,13 +79,6 @@ class Settings {
             登录
         </div>
         <br>
-        <div class="ac-game-settings-acwing">
-            <img width="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png">
-            <br>
-            <div>
-                AcWing一键登录
-            </div>
-        </div>
     </div>
 </div>
 `);
@@ -100,6 +100,7 @@ class Settings {
         this.$register_login = this.$register.find(".ac-game-settings-option");
 
         this.$acwing_login = this.$settings.find('.ac-game-settings-acwing img');
+        this.$qq_login = this.$settings.find('.ac-game-settings-qq img');
 
         this.$register.hide();
 
@@ -116,8 +117,12 @@ class Settings {
         this.add_listening_events_login();
         this.add_listening_events_register();
         this.$acwing_login.click(function() {
-            console.log("一键登录");
+            console.log("AcWing一键登录");
             outer.acwing_login();
+        });
+        this.$qq_login.click(function() {
+            console.log("QQ一键登录");
+            outer.qq_login();
         });
     }
 
@@ -127,6 +132,19 @@ class Settings {
             type: "GET",
             success: function(resp) {
                 console.log(resp);
+                if (resp.result === "success") {
+                    window.location.replace(resp.apply_code_url);
+                }
+            }
+        });
+    }
+
+    qq_login() {
+        var url = window.location.href;
+        $.ajax({
+            url: url + "settings/qq/apply_code/",
+            type: "GET",
+            success: function (resp) {
                 if (resp.result === "success") {
                     window.location.replace(resp.apply_code_url);
                 }

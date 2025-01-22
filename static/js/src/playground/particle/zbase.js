@@ -27,13 +27,12 @@ class Particle extends AcGameObject {
         this.render();
     }
     render() {
+        let scale = this.playground.scale;
         this.ctx.beginPath();
         if (this.radius < 0) {
-            console.log(this.radius);
             this.radius = 0.1;
-            console.log(this.radius);
         }
-        this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, 2 * Math.PI, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }

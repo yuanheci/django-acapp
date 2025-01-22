@@ -18,6 +18,13 @@ class GameMap extends AcGameObject {
         this.render(); 
     }
 
+    resize() {
+        this.ctx.canvas.width = this.playground.width;
+        this.ctx.canvas.height = this.playground.height;
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)"; // resize 完，涂一层不透明的即可
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
+
     render() {
         this.ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
 //        console.log(this.ctx.canvas.width);

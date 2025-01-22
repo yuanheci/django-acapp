@@ -6,6 +6,15 @@ class AcGameObject {
 
         this.has_called_start = false;
         this.timedelta = 0;
+        this.uuid = this.create_uuid();
+    }
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i++) {
+            let x = parseInt(Math.floor(Math.random() * 10)); //[0, 10)
+            res += x;
+        }
+        return res
     }
     start() {
 
