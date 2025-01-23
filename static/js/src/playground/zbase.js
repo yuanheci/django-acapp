@@ -36,6 +36,7 @@ class AcGamePlayground{
     show(mode){
         let outer = this;
         this.$playground.show();
+        this.mode = mode; // 把模式存下来
         // 开始生成游戏界面
         this.root.$ac_game.append(this.$playground);
 
@@ -43,6 +44,11 @@ class AcGamePlayground{
         this.height = this.$playground.height();
         this.resize();
         this.game_map = new GameMap(this);
+
+        //waiting -> fighting -> over
+        this.state = "waiting";
+        this.notice_board = new NoticeBoard(this);
+        this.player_count = 0;
 
         this.players = [];
         // player raidus = 0.05
@@ -58,7 +64,6 @@ class AcGamePlayground{
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid; //第一个加入的玩家就是自己
             // 链接创建成功后会回调的函数
-            // 当使用 WebSocket 建立连接时，onopen 事件会被触发，其对应的函数会被执行
             this.mps.ws.onopen = function() {
                 outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
             }

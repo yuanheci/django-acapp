@@ -36,6 +36,7 @@ class AcGamePlayground{
     show(mode){
         let outer = this;
         this.$playground.show();
+        this.mode = mode; // 把模式存下来
         // 开始生成游戏界面
         this.root.$ac_game.append(this.$playground);
 
@@ -43,6 +44,11 @@ class AcGamePlayground{
         this.height = this.$playground.height();
         this.resize();
         this.game_map = new GameMap(this);
+
+        //waiting -> fighting -> over
+        this.state = "waiting";
+        this.notice_board = new NoticeBoard(this);
+        this.player_count = 0;
 
         this.players = [];
         // player raidus = 0.05
