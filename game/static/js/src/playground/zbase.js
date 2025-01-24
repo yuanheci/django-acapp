@@ -63,6 +63,7 @@ class AcGamePlayground{
         } else if (mode === "multi mode") {
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid; //第一个加入的玩家就是自己
+            this.chat_field = new ChatField(this); //创建出聊天界面
             // 链接创建成功后会回调的函数
             this.mps.ws.onopen = function() {
                 outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);

@@ -98,18 +98,29 @@ class Player extends AcGameObject {
             }
             outer.cur_skill = null;  //清空当前技能
         });
-        this.window_handler = $(window).keydown(function(e) {
+        // keydown监听事件绑定到canvas上，canvas需要修改以支持监听（获得焦点）
+        this.window_handler = this.playground.game_map.$canvas.keydown(function(e) {
             if (outer.playground.state !== "fighting") 
-                return false; 
+                return true; 
             if (e.which === 81) { // q
                 if (outer.fireball_coldtime >= outer.eps)
-                    return false;
+                    return true;
                 outer.cur_skill = "fireball";
                 return false;
             } else if (e.which === 70) { //f
                 if (outer.blink_coldtime >= outer.eps) return true;
                 outer.cur_skill = "blink";
                 return false;
+            } else if (e.which === 13) {  //enter(显示对话框)
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.chat_field.show_input(); //input和history都会显示
+                    return false;
+                }
+            } else if (e.which === 27) { //esc(关闭对话框)
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.char_field.hide_input();
+                    return false;
+                }
             }
         });
     }

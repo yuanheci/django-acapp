@@ -2,7 +2,7 @@ class GameMap extends AcGameObject {
     constructor(playground) {
         super(); 
         this.playground = playground;
-        this.$canvas = $(`<canvas></canvas>`);
+        this.$canvas = $(`<canvas tabindex=0></canvas>`); // canvas支持获得焦点
         this.ctx = this.$canvas[0].getContext('2d');
 
         // set the canvas width and height
