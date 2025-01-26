@@ -131,6 +131,8 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# django_redis配置
+# 启动redis-server命令: sudo redis-server /etc/redis/redis.conf
 CACHES = { 
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
@@ -142,6 +144,11 @@ CACHES = {
 }
 USER_AGENTS_CACHE = 'default'
 
+# 使用websocket，配置django_channel
+'''
+是 Django 框架的一个扩展，它扩展了 Django 的功能，使其能够处理异步协议，包括 WebSocket、HTTP/2 等。
+Django 本身是一个同步的 Web 框架，主要处理传统的 HTTP 请求和响应，而 Django Channels 引入了异步处理能力，让 Django 可以应对需要实时通信的场景。
+'''
 ASGI_APPLICATION = 'acapp.asgi.application'
 CHANNEL_LAYERS = {
     "default": {

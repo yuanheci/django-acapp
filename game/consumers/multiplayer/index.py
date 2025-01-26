@@ -3,63 +3,62 @@ import json
 from django.conf import settings
 from django.core.cache import cache
 
+from thrift import Thrift
+from thrift.transport import TSocket
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+
+from match_system.src.match_server.match_service import Match
+from game.models.player.player import Player
+from channels.db import database_sync_to_async
+
 class MultiPlayer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
         print('accept')
-        self.room_name = None
-        for i in range(1000):  # 上限1k个房间
-            name = "room-%d" % (i)
-            # 当前房间为空，或房间内玩家人数不到ROOM_CAPACITY
-            if not cache.has_key(name) or len(cache.get(name)) < settings.ROOM_CAPACITY:
-                self.room_name = name
-                break
-        if not self.room_name:
-            return
-
-        if not cache.has_key(self.room_name): # 如果房间不存在，则新建房间
-            cache.set(self.room_name, [], 3600) # 有效期1小时
-
-        # 对该房间已存在的用户，创建到新加入的用户的游戏界面中
-        for player in cache.get(self.room_name):
-            await self.send(text_data=json.dumps({
-                'event': "create_player",
-                'uuid': player['uuid'],
-                'username': player['username'],
-                'photo': player['photo'],
-            }))
-            
-        # 这里room_name是组，channel_name是每个websocket链接
-        # 这里将channel加入group, 这样可以组内通信
-        await self.channel_layer.group_add(self.room_name, self.channel_name)
 
     async def disconnect(self, close_code):
         print('disconnect')
-        await self.channel_layer.group_discard(self.room_name, self.channel_name);
+        if self.room_name:
+            await self.channel_layer.group_discard(self.room_name, self.channel_name);
 
     async def create_player(self, data):
-        players = cache.get(self.room_name)
-        # 加入新的player
-        players.append({
-            'uuid': data['uuid'],
-            'username': data['username'],
-            'photo': data['photo']
-        })
-        cache.set(self.room_name, players, 3600) # 有效期1小时
-        # 原则，obj在哪里创建的，就以这里的uuid作为全局uuid使用
-        await self.channel_layer.group_send( # 群发消息给组内所有人，通过type字段匹配处理函数
-            self.room_name,
-            {
-                'type': "group_send_event",
-                'event': "create_player",
-                'uuid': data['uuid'],
-                'username': data['username'],
-                'photo': data['photo'],
-            }
-        )
+        print("server create_player")
+        # 这里room_name初始为空，需要在thrift匹配系统中实现匹配后获得room_name
+        # 然后之后的websocket同步操作都是基于这个room_name
+        self.room_name = None
+        self.uuid = data['uuid']
+
+        #ke socket
+        transport = TSocket.TSocket('127.0.0.1', 9090)
+
+        # Buffering is critical. Raw sockets are very slow
+        transport = TTransport.TBufferedTransport(transport)
+
+        # Wrap in a protocol
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+
+        # Create a client to use the protocol encoder
+        client = Match.Client(protocol)
+
+        def db_get_player():
+            return Player.objects.get(user__username=data['username']) # __表示user"的"username
+
+        # 将一个同步(sync)的数据库操作异步化(async)执行
+        player = await database_sync_to_async(db_get_player)()
+
+        # Connect!
+        transport.open()
+
+        client.add_player(player.score, data['uuid'], data['username'], data['photo'], self.channel_name)
+
+        # Close!
+        transport.close() 
+
 
     # async 和 await 的使用相当于协程
     async def move_to(self, data):
+        print("move_to, room_name = ", self.room_name) # 这里room_name=None
         await self.channel_layer.group_send(
             self.room_name,
             {
@@ -73,63 +72,73 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
     async def shoot_fireball(self, data):
         await self.channel_layer.group_send(
-            self.room_name,
-            {
-                'type': "group_send_event",
-                'event': "shoot_fireball",
-                'uuid': data['uuid'],
-                'tx': data['tx'],
-                'ty': data['ty'],
-                'ball_uuid': data['ball_uuid'],
-            }
-        )
+                self.room_name,
+                {
+                    'type': "group_send_event",
+                    'event': "shoot_fireball",
+                    'uuid': data['uuid'],
+                    'tx': data['tx'],
+                    'ty': data['ty'],
+                    'ball_uuid': data['ball_uuid'],
+                    }
+                )
 
     async def attack(self, data):
         await self.channel_layer.group_send(
-            self.room_name,
-            {
-                'type': "group_send_event",
-                'event': "attack",
-                'uuid': data['uuid'],
-                'attackee_uuid': data['attackee_uuid'],
-                'x': data['x'],
-                'y': data['y'],
-                'angle': data['angle'],
-                'damage': data['damage'],
-                'ball_uuid': data['ball_uuid'],
-            }
-        )
+                self.room_name,
+                {
+                    'type': "group_send_event",
+                    'event': "attack",
+                    'uuid': data['uuid'],
+                    'attackee_uuid': data['attackee_uuid'],
+                    'x': data['x'],
+                    'y': data['y'],
+                    'angle': data['angle'],
+                    'damage': data['damage'],
+                    'ball_uuid': data['ball_uuid'],
+                    }
+                )
 
     async def blink(self, data):
         await self.channel_layer.group_send(
-            self.room_name,
-            {
-                'type': "group_send_event",
-                'event': "blink",
-                'uuid': data['uuid'],
-                'tx': data['tx'],
-                'ty': data['ty'],
-            }
-        )
+                self.room_name,
+                {
+                    'type': "group_send_event",
+                    'event': "blink",
+                    'uuid': data['uuid'],
+                    'tx': data['tx'],
+                    'ty': data['ty'],
+                    }
+                )
 
     async def message(self, data):
         await self.channel_layer.group_send(
-            self.room_name,
-            {
-                'type': "group_send_event",
-                'event': "message",
-                'uuid': data['uuid'],
-                'username': data['username'],
-                'text': data['text'],
-            }
-        )
-        
+                self.room_name,
+                {
+                    'type': "group_send_event",
+                    'event': "message",
+                    'uuid': data['uuid'],
+                    'username': data['username'],
+                    'text': data['text'],
+                    }
+                )
+
     async def group_send_event(self, data): # 接收的名字就是type关键字
+        # 确保self.room_name有一个有效的值
+        # 这里是通过redis来实现self.room_name的同步，匹配系统中room_name确定值后设置到了redis中，这里通过redis得到room_name
+        if not self.room_name:
+            keys = cache.keys('*%s*' % (self.uuid))
+            if keys:
+                self.room_name = keys[0]
+            print(">>> group_send_event, empty, now self.room_name: ", self.room_name)
+            print("<<< data: ", data)
+        else:
+            print("+++ group_send_event, self.room_name: ", self.room_name)
         await self.send(text_data=json.dumps(data)) # 发送给前端
 
     async def receive(self, text_data):  # 标准函数，用于接收前端请求，可做路由
         data = json.loads(text_data)
-        print(data)
+        print("websocket server receive datadata", data)
         event = data['event']
         if event == "create_player":
             await self.create_player(data)
