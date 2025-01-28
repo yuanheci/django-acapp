@@ -58,7 +58,6 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
     # async 和 await 的使用相当于协程
     async def move_to(self, data):
-        print("move_to, room_name = ", self.room_name) # 这里room_name=None
         await self.channel_layer.group_send(
             self.room_name,
             {
@@ -84,6 +83,35 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 )
 
     async def attack(self, data):
+        if not self.room_name:
+            return
+        players = cache.get(self.room_name)
+        if not players:
+            return
+
+        for player in players:
+            if player['uuid'] == data['attackee_uuid']:
+                player['hp'] -= 25
+
+        remain_cnt = 0
+        for player in players:
+            if player['hp'] > 0:
+                remain_cnt += 1
+
+        if remain_cnt > 1:  #继续进行游戏
+            if self.room_name:
+                cache.set(self.room_name, players, 3600)
+        else:  # 结算
+            def db_update_player_score(username, score):
+                player = Player.objects.get(user__username=username)
+                player.score += score
+                player.save()
+            for player in players:
+                if player['hp'] <= 0:
+                    await database_sync_to_async(db_update_player_score)(player['username'], -5)
+                else:
+                    await database_sync_to_async(db_update_player_score)(player['username'], 10)
+
         await self.channel_layer.group_send(
                 self.room_name,
                 {
@@ -130,15 +158,10 @@ class MultiPlayer(AsyncWebsocketConsumer):
             keys = cache.keys('*%s*' % (self.uuid))
             if keys:
                 self.room_name = keys[0]
-            print(">>> group_send_event, empty, now self.room_name: ", self.room_name)
-            print("<<< data: ", data)
-        else:
-            print("+++ group_send_event, self.room_name: ", self.room_name)
         await self.send(text_data=json.dumps(data)) # 发送给前端
 
     async def receive(self, text_data):  # 标准函数，用于接收前端请求，可做路由
         data = json.loads(text_data)
-        print("websocket server receive datadata", data)
         event = data['event']
         if event == "create_player":
             await self.create_player(data)

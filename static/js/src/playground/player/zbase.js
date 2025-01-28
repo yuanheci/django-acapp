@@ -30,7 +30,7 @@ class Player extends AcGameObject {
             this.img.src = this.photo;
         }
         if (this.character === "me") {
-            this.fireball_coldtime = 3  //单位：s
+            this.fireball_coldtime = 0.1  //单位：s
             this.fireball_img = new Image();
             this.fireball_img.src = "https://cdn.acwing.com/media/article/image/2021/12/02/1_9340c86053-fireball.png";
             
@@ -43,7 +43,7 @@ class Player extends AcGameObject {
     start() {
         this.playground.player_count++;
         this.playground.notice_board.write("已就绪：" + this.playground.player_count + "人");
-        if (this.playground.player_count >= 2) {  //控制游戏人数
+        if (this.playground.player_count >= 3) {  //控制游戏人数
             this.playground.state = "fighting";
             this.playground.notice_board.write("Fighting");
         }
@@ -86,7 +86,7 @@ class Player extends AcGameObject {
                     if (outer.playground.mode === "multi mode") {
                         outer.playground.mps.send_shoot_fireball(tx, ty, fireball.uuid);
                     }
-                    outer.fireball_coldtime = 3;  //火球释放后，重启冷却时间
+                    outer.fireball_coldtime = 0.1;  //火球释放后，重启冷却时间
                 } else if (outer.cur_skill === "blink") {
                     outer.blink(tx, ty);
                     // 同步函数
@@ -209,11 +209,20 @@ class Player extends AcGameObject {
     // 死亡后，从全局数组中移除，因此不会执行update, bot不会自动射击
     update() {
         this.update_move();
+        this.update_win();
         // 只需要更新维护自己的冷却时间
         if (this.character === "me" && this.playground.state === "fighting") {
             this.update_coldtime();
         }
         this.render();
+    }
+
+    update_win() {
+        //竞赛状态，有且只有一名玩家，且该玩家就是我，则胜利
+        if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
+            this.playground.state = "over";
+            this.playground.score_board.win();
+        }
     }
 
     update_coldtime() {
@@ -335,7 +344,18 @@ class Player extends AcGameObject {
         }
     }
 
-    // is needed?
+    // destroy中会调用这个on_destroy()
     on_destroy() {
+        // 得从playground.players中删除
+        for (let i = 0; i < this.playground.players.length; i++) {
+            if (this.playground.players[i] === this) {
+                this.playground.players.splice(i, 1);
+            }
+        }
+        // 我死亡，且游戏处于竞赛状态，则失败
+        if (this.character === "me" && this.playground.state === "fighting") {
+            this.playground.state = "over";
+            this.playground.score_board.lose();
+        }
     }
 }

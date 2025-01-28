@@ -117,11 +117,9 @@ class Settings {
         this.add_listening_events_login();
         this.add_listening_events_register();
         this.$acwing_login.click(function() {
-            console.log("AcWing一键登录");
             outer.acwing_login();
         });
         this.$qq_login.click(function() {
-            console.log("QQ一键登录");
             outer.qq_login();
         });
     }
@@ -131,7 +129,6 @@ class Settings {
             url: "https://webapp.yuanheci.site/settings/acwing/web/apply_code/",
             type: "GET",
             success: function(resp) {
-                console.log(resp);
                 if (resp.result === "success") {
                     window.location.replace(resp.apply_code_url);
                 }
@@ -187,7 +184,6 @@ class Settings {
                 password_confirm: password_confirm,
             },
             success: function(resp) {
-                console.log(resp);
                 if (resp.result === "success") {
                     location.reload();
                 } else {
@@ -226,7 +222,6 @@ class Settings {
             url: "https://webapp.yuanheci.site/settings/logout/",
             type: "GET",
             success: function(resp) {
-                console.log(resp);
                 if (resp.result === "success") {
                     location.reload(); //重新执行start()，会调用getinfo函数，此时状态为未登录，所以会跳到登录界面
                 }
@@ -251,7 +246,6 @@ class Settings {
                 platform: outer.platform,
             },
             success: function(resp) {
-                //console.log(resp);
                 if (resp.result == "success") { //登录成功，关闭登录界面，打开主菜单
                     outer.username = resp.username;
                     outer.photo = resp.photo;
