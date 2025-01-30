@@ -1,7 +1,8 @@
 class MultiPlayerSocket {
     constructor(playground) {
         this.playground = playground;
-        this.ws = new WebSocket("wss://webapp.yuanheci.site/wss/multiplayer/");
+        // wss加上token验证
+        this.ws = new WebSocket("wss://webapp.yuanheci.site/wss/multiplayer/?token=" + playground.root.access);
         this.start();
         this.uuid = 0;
     }

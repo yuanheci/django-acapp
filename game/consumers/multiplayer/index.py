@@ -14,16 +14,21 @@ from channels.db import database_sync_to_async
 
 class MultiPlayer(AsyncWebsocketConsumer):
     async def connect(self):
-        await self.accept()
-        print('accept')
+        # django channels中，可以从 scope 中获取当前连接的用户对象。这对于进行权限验证、用户特定的业务逻辑处理非常有用。
+        # 这里能这样写，需要实现中间件，位于game/channelsmiddleware.py
+        user = self.scope['user']
+        if user.is_authenticated:
+            await self.accept()
+            print('accept')
+        else:
+            await self.close() # 会触发disconnect方法
 
     async def disconnect(self, close_code):
         print('disconnect')
-        if self.room_name:
+        if hasattr(self, 'room_name') and self.room_name:
             await self.channel_layer.group_discard(self.room_name, self.channel_name);
 
     async def create_player(self, data):
-        print("server create_player")
         # 这里room_name初始为空，需要在thrift匹配系统中实现匹配后获得room_name
         # 然后之后的websocket同步操作都是基于这个room_name
         self.room_name = None

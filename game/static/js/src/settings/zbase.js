@@ -109,9 +109,44 @@ class Settings {
         this.start();
     }
     start() {
-        this.getinfo(); //获取信息判断是否登陆成功，是的话自动跳到menu界面
+        if (this.root.access) { //已经拥有token
+            this.getinfo();
+            this.refresh_jwt_token();
+        } else {
+            this.login(); // 打开登录界面
+        }
         this.add_listening_events();
     }
+
+    refresh_jwt_token() {
+        let outer = this;
+        setInterval(function() { // setInterval会间隔指定时间重复执行 
+            $.ajax({
+                url: "https://webapp.yuanheci.site/settings/token/refresh/",
+                type: "post",
+                data: {
+                    refresh: outer.root.refresh,  // 把refresh传过去来获取最新的token
+                },
+                success: function(resp) {
+                    outer.root.access = resp.access;
+                }
+            });
+        }, 4.5 * 60 * 1000);
+
+        setTimeout(function() { //setTimeout只会时间到了执行一次
+            $.ajax({
+                url: "https://webapp.yuanheci.site/settings/ranklist/",
+                type: "get",
+                headers: {
+                    "Authorization": "Bearer " + outer.root.access,
+                },
+                success: function(resp) {
+                    console.log(resp);
+                }
+            });
+        }, 5000);
+    }
+
     add_listening_events() {
         let outer = this;
         this.add_listening_events_login();
@@ -125,6 +160,7 @@ class Settings {
     }
 
     acwing_login() {
+        let outer = this;
         $.ajax({
             url: "https://webapp.yuanheci.site/settings/acwing/web/apply_code/",
             type: "GET",
@@ -177,7 +213,7 @@ class Settings {
 
         $.ajax({
             url: "https://webapp.yuanheci.site/settings/register/",
-            type: "GET",
+            type: "post",
             data: {
                 username: username,
                 password: password,
@@ -185,7 +221,8 @@ class Settings {
             },
             success: function(resp) {
                 if (resp.result === "success") {
-                    location.reload();
+//                    location.reload();  //原先session-cookie方式是在这里刷新一下
+                    this.login_on_remote(username, password);  //获取token，就相当于登陆了
                 } else {
                     outer.$register_error_message.html(resp.result);
                 }
@@ -193,24 +230,29 @@ class Settings {
         });
     }
 
-    login_on_remote() { //在远程服务器上登录
+    login_on_remote(username, password) { //在远程服务器上登录
         let outer = this;
-        let username = this.$login_username.val();
-        let password = this.$login_password.val();
+        username = username || this.$login_username.val();
+        password = password || this.$login_password.val();
         this.$login_error_message.empty();
+
         $.ajax({
-            url: "https://webapp.yuanheci.site/settings/login/",
-            type: "GET",
+            url: "https://webapp.yuanheci.site/settings/token/", // 获取token
+            type: "POST",
             data: {
                 username: username,
                 password: password,
             },
             success: function(resp) {
-                if (resp.result === "success") {
-                    location.reload();
-                } else {
-                    outer.$login_error_message.html(resp.result);
-                }
+                outer.root.access = resp.access;
+                outer.root.refresh = resp.refresh;
+                // 刷新token
+                outer.refresh_jwt_token();
+                // 获取登录信息
+                outer.getinfo();
+            },
+            error: function(resp) {
+                outer.$login_error_message.html("用户名或密码错误！");
             }
         });
     }
@@ -218,15 +260,10 @@ class Settings {
     logout_on_remote() { //在远程服务器上登出
         if (this.platform === "ACAPP") return false;
 
-        $.ajax({
-            url: "https://webapp.yuanheci.site/settings/logout/",
-            type: "GET",
-            success: function(resp) {
-                if (resp.result === "success") {
-                    location.reload(); //重新执行start()，会调用getinfo函数，此时状态为未登录，所以会跳到登录界面
-                }
-            }
-        });
+        // jwt框架下，登出就是把token扔掉即可
+        this.root.access = "";
+        this.root.refresh = "";
+        location.href = "/";
     }
 
     register() { //打开注册界面
@@ -241,10 +278,14 @@ class Settings {
         let outer = this;
         $.ajax({
             url: "https://webapp.yuanheci.site/settings/getinfo/",
-            type: "GET",
+            type: "get",
             data: {
                 platform: outer.platform,
             },
+            headers: {
+                'Authorization': "Bearer " + this.root.access,
+            },
+
             success: function(resp) {
                 if (resp.result == "success") { //登录成功，关闭登录界面，打开主菜单
                     outer.username = resp.username;
