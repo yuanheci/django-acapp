@@ -222,7 +222,7 @@ class Settings {
             success: function(resp) {
                 if (resp.result === "success") {
 //                    location.reload();  //原先session-cookie方式是在这里刷新一下
-                    this.login_on_remote(username, password);  //获取token，就相当于登陆了
+                    outer.login_on_remote(username, password);  //获取token，就相当于登陆了
                 } else {
                     outer.$register_error_message.html(resp.result);
                 }
